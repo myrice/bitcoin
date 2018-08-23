@@ -10,12 +10,11 @@
 #include <serialize.h>
 #include <uint256.h>
 
-/** Nodes collect new transactions into a block, hash them into a hash tree,
- * and scan through nonce values to make the block's hash satisfy proof-of-work
- * requirements.  When they solve the proof-of-work, they broadcast the block
- * to everyone and the block is added to the block chain.  The first transaction
- * in the block is a special one that creates a new coin owned by the creator
- * of the block.
+/*
+ * 节点会收集新的交易进入到区块中，并在hash树中记录它们的hash
+ * 通过调整nonce值来满足工作量证明
+ * 当节点解出了nonce，就会把区块广播给所有节点，并且将区块加入到区块链上。
+ * 区块上的第一个交易是特殊的，coinbase交易，产生新币，发送给区块创建者。
  */
 class CBlockHeader
 {

@@ -1161,20 +1161,18 @@ void RenameThread(const char* name)
 void SetupEnvironment()
 {
 #ifdef HAVE_MALLOPT_ARENA_MAX
-    // glibc-specific: On 32-bit systems set the number of arenas to 1.
-    // By default, since glibc 2.10, the C library will create up to two heap
-    // arenas per core. This is known to cause excessive virtual address space
-    // usage in our usage. Work around it by setting the maximum number of
-    // arenas to 1.
-    if (sizeof(void*) == 4) {
-        mallopt(M_ARENA_MAX, 1);
+    // M_ARENA_MAX 表示最多能创建的arena数，arena表示malloc分配的内存池
+    // arena线程安全，数量越多，线程的竞争压力越小，但内存消耗越多
+    // 所以针对32位系统，将数量控制为1
+    if (sizeof(void*) == 4) {  // 判断当前系统是32位
+        mallopt(M_ARENA_MAX, 1);  //mallopt是用来控制malloc内存分配时的行为的
     }
 #endif
     // On most POSIX systems (e.g. Linux, but not BSD) the environment's locale
     // may be invalid, in which case the "C" locale is used as fallback.
 #if !defined(WIN32) && !defined(MAC_OSX) && !defined(__FreeBSD__) && !defined(__OpenBSD__)
     try {
-        std::locale(""); // Raises a runtime error if current locale is invalid
+        std::locale(""); // 根据程序所使用的当前环境设置系统区域，如果不合法就报运行时错误
     } catch (const std::runtime_error&) {
         setenv("LC_ALL", "C", 1);
     }

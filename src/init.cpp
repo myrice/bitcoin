@@ -744,34 +744,36 @@ static bool AppInitServers()
 // Parameter interaction based on rules
 void InitParameterInteraction()
 {
-    // when specifying an explicit binding address, you want to listen on it
-    // even when -connect or -proxy is specified
+    // 当设置了-bind，即使出现-connect或者-proxy，都会监听-bind
     if (gArgs.IsArgSet("-bind")) {
         if (gArgs.SoftSetBoolArg("-listen", true))
             LogPrintf("%s: parameter interaction: -bind set -> setting -listen=1\n", __func__);
     }
+    // 如-bind
     if (gArgs.IsArgSet("-whitebind")) {
         if (gArgs.SoftSetBoolArg("-listen", true))
             LogPrintf("%s: parameter interaction: -whitebind set -> setting -listen=1\n", __func__);
     }
 
+    // 只连接信任节点，不通过DNS查询，不使用默认的地址
     if (gArgs.IsArgSet("-connect")) {
-        // when only connecting to trusted nodes, do not seed via DNS, or listen by default
         if (gArgs.SoftSetBoolArg("-dnsseed", false))
             LogPrintf("%s: parameter interaction: -connect set -> setting -dnsseed=0\n", __func__);
         if (gArgs.SoftSetBoolArg("-listen", false))
             LogPrintf("%s: parameter interaction: -connect set -> setting -listen=0\n", __func__);
     }
 
+    // 设置代理，保护ip隐私，不被外部攻击
     if (gArgs.IsArgSet("-proxy")) {
         // to protect privacy, do not listen by default if a default proxy server is specified
         if (gArgs.SoftSetBoolArg("-listen", false))
             LogPrintf("%s: parameter interaction: -proxy set -> setting -listen=0\n", __func__);
-        // to protect privacy, do not use UPNP when a proxy is set. The user may still specify -listen=1
-        // to listen locally, so don't rely on this happening through -listen below.
+        // -upnp参数全称是Universal Plug and Play，通用即插即用
+        // 是为了实现计算机与智能设备对等网络的连接体系结构，主要目标是希望有任何设备连接到网络时，
+        // 网络中的设备都能直接使用或者控制它，这里是不希望检测任何upnp设备。
         if (gArgs.SoftSetBoolArg("-upnp", false))
             LogPrintf("%s: parameter interaction: -proxy set -> setting -upnp=0\n", __func__);
-        // to protect privacy, do not discover addresses by default
+        //保护，不被其他节点发现
         if (gArgs.SoftSetBoolArg("-discover", false))
             LogPrintf("%s: parameter interaction: -proxy set -> setting -discover=0\n", __func__);
     }
@@ -792,21 +794,22 @@ void InitParameterInteraction()
             LogPrintf("%s: parameter interaction: -externalip set -> setting -discover=0\n", __func__);
     }
 
-    // disable whitelistrelay in blocksonly mode
+    // -blocksonly表示该节点只接受矿工打包成功的区块，不接受未确认的交易，
+    // 这是在当前节点网络资源有限的情况下减少负载的一种方式
     if (gArgs.GetBoolArg("-blocksonly", DEFAULT_BLOCKSONLY)) {
+        // -whitelistrelay表示接受从白名单中的节点转发过来的交易，这个值默认是1，
+        // 这里因为设置了只接受打包的区块，所以不会接受任何交易，自然也不会接受转发的交易。
         if (gArgs.SoftSetBoolArg("-whitelistrelay", false))
             LogPrintf("%s: parameter interaction: -blocksonly=1 -> setting -whitelistrelay=0\n", __func__);
     }
 
-    // Forcing relay from whitelisted hosts implies we will accept relays from them in the first place.
+    //表示强制转发从白名单中继过来的交易信息，即使该交易违背了本地的策略，例如小于设置的交易费界限等等
     if (gArgs.GetBoolArg("-whitelistforcerelay", DEFAULT_WHITELISTFORCERELAY)) {
         if (gArgs.SoftSetBoolArg("-whitelistrelay", true))
             LogPrintf("%s: parameter interaction: -whitelistforcerelay=1 -> setting -whitelistrelay=1\n", __func__);
     }
 
-    // Warn if network-specific options (-addnode, -connect, etc) are
-    // specified in default section of config file, but not overridden
-    // on the command line or in this network's section of the config file.
+    //警告一下，命令行和配置文件不一的情况
     gArgs.WarnForSectionOnlyArgs();
 }
 
@@ -816,7 +819,7 @@ static std::string ResolveErrMsg(const char * const optname, const std::string& 
 }
 
 /**
- * Initialize global loggers.
+ * 初始化全局loggers
  *
  * Note that this is called very early in the process lifetime, so you should be
  * careful about what global state you rely on here.

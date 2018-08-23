@@ -57,31 +57,38 @@ public:
 /** An input of a transaction.  It contains the location of the previous
  * transaction's output that it claims and a signature that matches the
  * output's public key.
+ * 交易的输入，包括当前输入对应前一笔交易的输出的位置，以及花费前一笔输出需要的签名脚本
+ * CScriptWitness是用来支持隔离见证时使用的。
  */
 class CTxIn
 {
 public:
-    COutPoint prevout;
-    CScript scriptSig;
-    uint32_t nSequence;
+    COutPoint prevout;  //前一笔交易输出的位置
+    CScript scriptSig;  //解锁脚本
+    uint32_t nSequence;  //序列号
     CScriptWitness scriptWitness; //! Only serialized through CTransaction
 
     /* Setting nSequence to this value for every input in a transaction
-     * disables nLockTime. */
+     * disables nLockTime. 
+     * 规则1：如果一笔交易中的SEQUENCE_FINAL都被赋值了相应的nSequence，那么nLockTime就会被禁用
+     */
     static const uint32_t SEQUENCE_FINAL = 0xffffffff;
 
     /* Below flags apply in the context of BIP 68*/
     /* If this flag set, CTxIn::nSequence is NOT interpreted as a
-     * relative lock-time. */
+     * relative lock-time. 
+     * 规则2：如果设置了这个变量，那么规则1就失效了*/
     static const uint32_t SEQUENCE_LOCKTIME_DISABLE_FLAG = (1 << 31);
 
     /* If CTxIn::nSequence encodes a relative lock-time and this flag
      * is set, the relative lock-time has units of 512 seconds,
-     * otherwise it specifies blocks with a granularity of 1. */
+     * otherwise it specifies blocks with a granularity of 1. 
+     * 规则3：如果规则1有效并且设置了此变量，那么相对锁定时间就为512秒，否则锁定时间就为1个区块*/
     static const uint32_t SEQUENCE_LOCKTIME_TYPE_FLAG = (1 << 22);
 
     /* If CTxIn::nSequence encodes a relative lock-time, this mask is
-     * applied to extract that lock-time from the sequence field. */
+     * applied to extract that lock-time from the sequence field. 
+     * 规则4：如果规则1有效，那么这个变量就用来从nSequence计算对应的锁定时间*/
     static const uint32_t SEQUENCE_LOCKTIME_MASK = 0x0000ffff;
 
     /* In order to use the same number of bits to encode roughly the
@@ -131,8 +138,8 @@ public:
 class CTxOut
 {
 public:
-    CAmount nValue;
-    CScript scriptPubKey;
+    CAmount nValue;  //输出金额
+    CScript scriptPubKey;  //锁定脚本
 
     CTxOut()
     {
@@ -160,6 +167,8 @@ public:
         return (nValue == -1);
     }
 
+    // 获取dust阈值，一笔交易如果交易费小于dust阈值，就会被认为是dust tx， 
+    // 此函数在最新版本中已转移到src/policy/policy.h中
     friend bool operator==(const CTxOut& a, const CTxOut& b)
     {
         return (a.nValue       == b.nValue &&
@@ -273,15 +282,12 @@ public:
     // MAX_STANDARD_VERSION will be equal.
     static const int32_t MAX_STANDARD_VERSION=2;
 
-    // The local variables are made const to prevent unintended modification
-    // without updating the cached hash value. However, CTransaction is not
-    // actually immutable; deserialization and assignment are implemented,
-    // and bypass the constness. This is safe, as they update the entire
-    // structure, including the hash.
+    // 这些变量被设置成const，为了避免在没有更新缓存hash值的情况下，被无意识的更新修改
+    // 但CTransaction并不是不能被修改，可以通过序列化和重新赋值的方式加以实现。
     const std::vector<CTxIn> vin;
     const std::vector<CTxOut> vout;
     const int32_t nVersion;
-    const uint32_t nLockTime;
+    const uint32_t nLockTime; //锁定时间
 
 private:
     /** Memory only. */

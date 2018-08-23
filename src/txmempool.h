@@ -50,15 +50,8 @@ struct LockPoints
 class CTxMemPool;
 
 /** \class CTxMemPoolEntry
- *
- * CTxMemPoolEntry stores data about the corresponding transaction, as well
- * as data about all in-mempool transactions that depend on the transaction
- * ("descendant" transactions).
- *
- * When a new entry is added to the mempool, we update the descendant state
- * (nCountWithDescendants, nSizeWithDescendants, and nModFeesWithDescendants) for
- * all ancestors of the newly added transaction.
- *
+ * CTxMemPoolEntry存储交易和该该交易的子孙交易
+ * 当一个新entry被加入到mempool中，我们会更新所有新加入交易的子孙状态。
  */
 
 class CTxMemPoolEntry
@@ -366,17 +359,15 @@ public:
 };
 
 /**
- * CTxMemPool stores valid-according-to-the-current-best-chain transactions
- * that may be included in the next block.
+ * CTxMemPool存储了所有在当前主链上有效的交易
+ * (valid-according-to-the-current-best-chain transactions)
+ * 它可能会被加入到下一个block中。
  *
- * Transactions are added when they are seen on the network (or created by the
- * local node), but not all transactions seen are added to the pool. For
- * example, the following new transactions will not be added to the mempool:
- * - a transaction which doesn't meet the minimum fee requirements.
- * - a new transaction that double-spends an input of a transaction already in
- * the pool where the new transaction does not meet the Replace-By-Fee
- * requirements as defined in BIP 125.
- * - a non-standard transaction.
+ * 当Transcations被广播到网络中(或者在本地节点被创建)，就会被加入交易池中。
+ * 但以下Transcations不会被加入
+ * - 交易费太小 
+ * - “双花”情况
+ * - 非标准交易
  *
  * CTxMemPool::mapTx, and CTxMemPoolEntry bookkeeping:
  *

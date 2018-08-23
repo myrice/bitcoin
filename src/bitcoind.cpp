@@ -62,14 +62,14 @@ static bool AppInit(int argc, char* argv[])
     // Parameters
     //
     // If Qt is used, parameters/bitcoin.conf are parsed in qt/bitcoin.cpp's main()
-    SetupServerArgs();
+    SetupServerArgs();  //设置程序参数
     std::string error;
     if (!gArgs.ParseParameters(argc, argv, error)) {
         fprintf(stderr, "Error parsing command line arguments: %s\n", error.c_str());
         return false;
     }
 
-    // Process help and version before taking care about datadir
+    // 处理help和version的情况，在处理datadir之前
     if (HelpRequested(gArgs) || gArgs.IsArgSet("-version")) {
         std::string strUsage = PACKAGE_NAME " Daemon version " + FormatFullVersion() + "\n";
 
@@ -98,7 +98,7 @@ static bool AppInit(int argc, char* argv[])
             fprintf(stderr, "Error reading configuration file: %s\n", error.c_str());
             return false;
         }
-        // Check for -testnet or -regtest parameter (Params() calls are only valid after this clause)
+        // 检查-testnet和-regtest参数，选择网络
         try {
             SelectParams(gArgs.GetChainName());
         } catch (const std::exception& e) {
@@ -107,6 +107,7 @@ static bool AppInit(int argc, char* argv[])
         }
 
         // Error out when loose non-argument tokens are encountered on command line
+        // 检查每个参数是否符合格式，以‘-’开头
         for (int i = 1; i < argc; i++) {
             if (!IsSwitchChar(argv[i][0])) {
                 fprintf(stderr, "Error: Command line contains unexpected token '%s', see bitcoind -h for a list of options.\n", argv[i]);
@@ -114,22 +115,22 @@ static bool AppInit(int argc, char* argv[])
             }
         }
 
-        // -server defaults to true for bitcoind but not for the GUI so do this here
+        // -server 在bitcoind中默认设置true
         gArgs.SoftSetBoolArg("-server", true);
         // Set this early so that parameter interactions go to console
-        InitLogging();
-        InitParameterInteraction();
-        if (!AppInitBasicSetup())
+        InitLogging();  //初始化日志函数
+        InitParameterInteraction();  //初始化网络参数
+        if (!AppInitBasicSetup())  //设置相应的消息以及处理方式
         {
             // InitError will have been called with detailed error, which ends up on console
             return false;
         }
-        if (!AppInitParameterInteraction())
+        if (!AppInitParameterInteraction())  //设置区块链运行参数
         {
             // InitError will have been called with detailed error, which ends up on console
             return false;
         }
-        if (!AppInitSanityChecks())
+        if (!AppInitSanityChecks())  //检查区块链所需要的库是否正常
         {
             // InitError will have been called with detailed error, which ends up on console
             return false;

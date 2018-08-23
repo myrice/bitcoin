@@ -44,7 +44,7 @@ struct BIP9Deployment {
 };
 
 /**
- * Parameters that influence chain consensus.
+ * 影响共识的参数
  */
 struct Params {
     uint256 hashGenesisBlock;
